@@ -4,6 +4,8 @@ import streamlit as st
 import pydeck as pdk
 import plotly.express as px
 import plotly.graph_objs as go
+import joblib
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 st.set_page_config(
     page_title="10 Year Academic Insights",
@@ -15,6 +17,12 @@ st.set_page_config(
 def load_css(file_path="/Users/bossbanner/Desktop/Project/given data/assets/directory/styles.css"):
     with open(file_path, "r") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+@st.cache_resource        
+def load_model():
+    return joblib.load('model_with_stopwords_removed_without_thousand_again.joblib')
+
+model = load_model()
 
 # Load datasets function
 def load_combined_dataset(base_path='.'):
@@ -527,7 +535,7 @@ elif page == "Author and Affiliation Insights":
         hide_index=True
     )
 
-    
+
 
 elif page == "Topic/Keyword Filter":
 
@@ -568,7 +576,7 @@ elif page == "Topic/Keyword Filter":
                     max_value=max_year,
                     value=(min_year, max_year),
                     help="Select the range of publication years to filter"
-            )
+                )
 
         with col3:
             # Country Multiselect
@@ -595,7 +603,7 @@ elif page == "Topic/Keyword Filter":
             if filtered_data.empty:
                 st.warning(f"No research papers found for '{keyword}'")
             else:
-                tab1, tab2, tab3 = st.tabs(["📊 Data Table", "🗺️ Geospatial View", "📈 Publication Trends"])
+                tab1, tab2, tab3, tab4 = st.tabs(["📊 Data Table", "🗺️ Geospatial View", "📈 Publication Trends", "🔮 Cluster Prediction"])
 
                 # Data Table
                 with tab1:  # 📊 Data Table Tab
@@ -688,17 +696,90 @@ elif page == "Topic/Keyword Filter":
                         )
                         st.plotly_chart(trend_fig, use_container_width=True)
 
-                # Summary Metrics
-                st.markdown("### 📖 Quick Statistics")
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Total Papers", len(filtered_data))
-                with col2:
-                    st.metric("Unique Countries", filtered_data['country'].nunique())
-                with col3:
-                    st.metric(
-                        "Publication Range",
-                        f"{filtered_data['publication_date'].dt.year.min()} - {filtered_data['publication_date'].dt.year.max()}"
-                    )
+                with tab4:  ## 🔮 Cluster Prediction
+
+                    # Add the header for Cluster Prediction Section
+                    st.markdown("### 🎯 Cluster Insights for Keyword")
+
+                    # Display predicted cluster
+                    cluster = model.predict([keyword])  # Predict cluster based on the keyword
+                    st.write(f"## Predicted Cluster: {cluster[0]}")  # Show the predicted cluster
+
+                    # Load the dataset containing cluster data
+                    cluster_data = pd.read_csv('data_with_cluster.csv')
+
+                    # Filter the data based on the predicted cluster
+                    filtered_cluster_data = cluster_data[cluster_data['Cluster'] == cluster[0]]
+
+                    # Check if we have data for the predicted cluster
+                    if filtered_cluster_data.empty:
+                        st.warning(f"No data found for Cluster {cluster[0]}")
+                    else:
+                        # Cluster Map Section
+                        st.markdown('<div class="cluster-map-container">', unsafe_allow_html=True)
+                        st.markdown("### 🌍 Cluster Map")
+                        
+                        # Prepare the data for plotting on the map
+                        cluster_map_data = filtered_cluster_data[['latitude', 'longitude', 'author_name', 'title']]
+
+                        # Create the pydeck map
+                        cluster_map = pdk.Deck(
+                            initial_view_state=pdk.ViewState(
+                                latitude=filtered_cluster_data['latitude'].mean(),
+                                longitude=filtered_cluster_data['longitude'].mean(),
+                                zoom=5,  # Adjust zoom level
+                                pitch=50,
+                            ),
+                            layers=[
+                                pdk.Layer(
+                                    'ScatterplotLayer',
+                                    data=cluster_map_data,
+                                    get_position='[longitude, latitude]',
+                                    get_color='[200, 30, 0, 160]',
+                                    get_radius=50000,  # Adjust size of the scatter plot points
+                                    pickable=True,
+                                    opacity=0.7,
+                                    radius_pixels=10,
+                                ),
+                            ],
+                        )
+
+                        # Display the map in the app
+                        st.pydeck_chart(cluster_map)
+                        
+                        # Optionally, display some information about the data points
+                        st.write(f"Displaying data for {len(filtered_cluster_data)} research papers in Cluster {cluster[0]}")
+                        
+                        # Apply styling to the dataframe (same style as before)
+                        styled_table = filtered_cluster_data[['author_name', 'title', 'city', 'country', 'latitude', 'longitude']].style.apply(
+                            lambda x: ['background-color: #f0f2f6' if i % 2 == 0 else '' for i in range(len(x))],
+                            axis=0
+                        ).set_properties(**{
+                            'font-size': '12px',
+                            'border': '1px solid #ddd',
+                            'text-align': 'left'
+                        })
+
+                        # Display the styled dataframe
+                        st.dataframe(
+                            styled_table,
+                            use_container_width=True,
+                            hide_index=True
+                        )
+
+                    st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    # Summary Metrics
+                    st.markdown("### 📖 Quick Statistics")
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Total Papers", len(filtered_data))
+                    with col2:
+                        st.metric("Unique Countries", filtered_data['country'].nunique())
+                    with col3:
+                        st.metric(
+                            "Publication Range",
+                            f"{filtered_data['publication_date'].dt.year.min()} - {filtered_data['publication_date'].dt.year.max()}"
+                        )
     
     topic_keyword_filter(filtered_df, df)
