@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # Load external CSS
-def load_css(file_path="/Users/bossbanner/Desktop/Project/given data/assets/directory/styles.css"):
+def load_css(file_path="assets/directory/styles.css"):
     with open(file_path, "r") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
