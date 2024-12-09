@@ -1,0 +1,70 @@
+
+/* Main background and text color */
+.stApp {
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Header styling */
+.stMarkdown h1 {
+    color: #2c3e50;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* Subtle Description Styling */
+.subtle-description {
+    text-align: center;
+    color: #7f8c8d;
+    margin-bottom: 20px;
+}
+
+/* Sidebar styling */
+.css-1aumxhk {
+    background-color: var(--toastify-color-light);
+    border-right: 1px solid #e0e0e0;
+}
+
+/* Sidebar header */
+.css-1aumxhk .css-1v3fvcr {
+    color: var(--toastify-color-dark);
+    font-weight: bold;
+}
+
+/* Card-like containers */
+.stContainer, .stCard {
+    background-color: var(--toastify-color-light);
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+/* Subheader styling */
+.stSubheader {
+    color: var(--toastify-color-info);
+    border-bottom: 2px solid var(--toastify-color-progress-info);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Button styling */
+.stRadio > div {
+    display: flex;
+    justify-content: center;
+}
+
+.stButton > button {
+    background-color: var(--toastify-color-info);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    transition: background-color 0.3s ease;
+}
+
+.stButton > button:hover {
+    background-color: var(--toastify-color-progress-info);
+}
+
